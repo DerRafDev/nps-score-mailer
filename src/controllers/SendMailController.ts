@@ -30,27 +30,27 @@ class SendMailController {
         if(!surveyAlreadyExists) {
             return response.status(400).json({
               error: "Survey does not exists!"  
-            })
-        }
+            });
+        };
+
+        const npsPath = resolve(__dirname, "..", "views", "emails", "npsMail.hbs");
+
+        const surveySave = await surveysUsersRepository.findOne({
+            where: {user_id: userAlreadyExists.id, value: null},
+            //this relations is for in insominia showing everything of user
+            relations: ["user", "survey"]
+        });
 
         const variables = {
             name: userAlreadyExists.name,
             title: surveyAlreadyExists.title,
             description: surveyAlreadyExists.description,
-            user_id: userAlreadyExists.id,
+            id: "",
             link: process.env.URL_MAIL
         };
 
-        const npsPath = resolve(__dirname, "..", "views", "emails", "npsMail.hbs");
-
-
-        const surveySave = await surveysUsersRepository.findOne({
-            where: [{user_id: userAlreadyExists.id}, {value: null}],
-            //this relations is for in insominia showing everything of user
-            relations: ["user", "survey"]
-        });
-
         if (surveySave) {
+            variables.id = surveySave.id;
             await SendMailService.execute(
                 email,
                 surveyAlreadyExists.title,
@@ -59,6 +59,7 @@ class SendMailController {
             );
             return response.json(surveySave);
         }
+        
         //save the info in the table surveyUser
         const surveyUser = surveysUsersRepository.create({
             user_id: userAlreadyExists.id,
@@ -67,6 +68,7 @@ class SendMailController {
 
         await surveysUsersRepository.save(surveyUser);
 
+        variables.id = surveyUser.id;
         //send e-mail to the user
         await SendMailService.execute(
             email,
