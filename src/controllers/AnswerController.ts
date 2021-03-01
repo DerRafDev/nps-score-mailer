@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { getCustomRepository } from "typeorm";
 import { SurveysUsersRepository } from "../repositories/SurveysUsersRepository";
+import { AppError } from "../errors/AppError";
 
 //this is for receiving the Answer from the User in the Mail
 class AnswerController {
@@ -17,9 +18,7 @@ class AnswerController {
         });
 
         if(!surveyUser) {
-            return response.status(400).json({
-                error: "Survey User does not exists!"
-            })
+            throw new AppError("Survey User does not exists!")
         }
 
         //this is for replacing the value with the user answer
